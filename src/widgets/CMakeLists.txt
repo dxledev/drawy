@@ -237,12 +237,25 @@ target_sources(
         common/renderitems.hpp
 )
 
+target_sources(
+    libdrawywidgets
+    PRIVATE
+        dialog/filechooser.hpp
+        dialog/filechooser.cpp
+        dialog/confirmmodal.hpp
+        dialog/confirmmodal.cpp
+        dialog/modalmotion.hpp
+        dialog/modalmotion.cpp
+)
+
 if(USE_DBUS)
     target_sources(
         libdrawywidgets
         PRIVATE
             dbus/managepowermanagement.hpp
             dbus/managepowermanagement.cpp
+            dbus/portalfilechooser.hpp
+            dbus/portalfilechooser.cpp
     )
 endif()
 
@@ -284,6 +297,7 @@ target_link_libraries(
 
 if(USE_DBUS)
     target_link_libraries(libdrawywidgets PRIVATE Qt::DBus)
+    target_compile_definitions(libdrawywidgets PRIVATE DRAWY_USE_DBUS)
 endif()
 
 kconfig_add_kcfg_files(libdrawywidgets settings/drawyglobalconfig.kcfgc)

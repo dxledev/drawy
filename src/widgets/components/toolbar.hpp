@@ -9,6 +9,7 @@
 
 #include "tools/customtool.hpp"
 #include "tools/tool.hpp"
+class QAction;
 class QButtonGroup;
 class QHBoxLayout;
 class ToolBar : public Frame
@@ -28,6 +29,8 @@ public:
 
     void addCustomTool(const std::shared_ptr<CustomTool> &tool);
     void addImageTool(const std::shared_ptr<Tool> &tool);
+    /// A plain button that triggers the action. It is not a tool and never becomes the current one.
+    void addActionButton(QAction *action);
 Q_SIGNALS:
     void toolChanged(Tool &);
     void toolbarShown();

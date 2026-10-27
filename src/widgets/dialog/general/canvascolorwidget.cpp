@@ -7,6 +7,7 @@
 
 #include <KColorButton>
 #include <KLocalizedString>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFormLayout>
 #include <QLineEdit>
@@ -16,6 +17,7 @@ CanvasColorWidget::CanvasColorWidget(QWidget *parent)
     , m_lightThemeColor{new KColorButton{DrawyGlobalConfig::backgroundColorLight(), this}}
     , m_darkThemeColor{new KColorButton{DrawyGlobalConfig::backgroundColorDark(), this}}
     , m_canvasMode{new QComboBox{this}}
+    , m_canvasThemed{new QCheckBox{i18n("Themed"), this}}
     , m_paletteSource{new QLineEdit{this}}
 {
     const auto widget{new QWidget{this}};
@@ -26,11 +28,13 @@ CanvasColorWidget::CanvasColorWidget(QWidget *parent)
     m_canvasMode->addItem(i18n("Light"), DrawyGlobalConfig::EnumCanvasMode::Light);
     m_canvasMode->addItem(i18n("Dark"), DrawyGlobalConfig::EnumCanvasMode::Dark);
     m_canvasMode->setToolTip(i18n("Inherit scheme follows the light or dark mode of the active color scheme."));
+    m_canvasThemed->setToolTip(i18n("Tint the light or dark canvas with the color scheme's accent color."));
     m_paletteSource->setClearButtonEnabled(true);
     m_paletteSource->setPlaceholderText(i18n("Auto-detect from the active shell theme"));
     m_paletteSource->setToolTip(i18n("Palette file or folder (Colors.qml, palette.json, noctalia.json, kitty.conf) followed by System Dark and System Light."));
 
     layout->addRow(i18n("Canvas color"), m_canvasMode);
+    layout->addRow(QString{}, m_canvasThemed);
     layout->addRow(i18n("Light theme color"), m_lightThemeColor);
     layout->addRow(i18n("Dark theme color"), m_darkThemeColor);
     layout->addRow(i18n("System palette"), m_paletteSource);
@@ -43,6 +47,7 @@ void CanvasColorWidget::save()
     DrawyGlobalConfig::setBackgroundColorLight(m_lightThemeColor->color());
     DrawyGlobalConfig::setBackgroundColorDark(m_darkThemeColor->color());
     DrawyGlobalConfig::setCanvasMode(m_canvasMode->currentData().toInt());
+    DrawyGlobalConfig::setCanvasThemed(m_canvasThemed->isChecked());
     DrawyGlobalConfig::setSystemPaletteSource(m_paletteSource->text().trimmed());
     DrawyGlobalConfig::self()->save();
 }
@@ -52,6 +57,7 @@ void CanvasColorWidget::load()
     m_lightThemeColor->setColor(DrawyGlobalConfig::backgroundColorLight());
     m_darkThemeColor->setColor(DrawyGlobalConfig::backgroundColorDark());
     m_canvasMode->setCurrentIndex(qMax(0, m_canvasMode->findData(DrawyGlobalConfig::canvasMode())));
+    m_canvasThemed->setChecked(DrawyGlobalConfig::canvasThemed());
     m_paletteSource->setText(DrawyGlobalConfig::systemPaletteSource());
 }
 

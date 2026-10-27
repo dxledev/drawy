@@ -20,5 +20,8 @@ public:
     void mouseReleased(ApplicationContext *context) override;
 
 private:
-    QString m_filter;
+    void chooseImage(ApplicationContext *context, const QPointF &lastPoint);
+    void insertImage(ApplicationContext *context, const QPointF &lastPoint, const QString &fileName);
+
+    QStringList m_patterns;
 };

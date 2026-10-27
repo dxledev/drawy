@@ -50,6 +50,10 @@
         </choices>
         <default>InheritScheme</default>
       </entry>
+      <!-- Tint the canvas with the scheme's accent color. -->
+      <entry name="CanvasThemed" type="Bool">
+        <default>false</default>
+      </entry>
     </group>
     <group name="Appearance">
       <!-- "", "dark" or "light": the System Dark / System Light scheme that follows the shell palette. -->

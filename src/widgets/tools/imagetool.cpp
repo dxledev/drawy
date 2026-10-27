@@ -11,14 +11,16 @@
 #include "context/renderingcontext.hpp"
 #include "context/spatialcontext.hpp"
 #include "context/uicontext.hpp"
+#include "dialog/filechooser.hpp"
 #include "event/event.hpp"
 #include "item/factory/imagefactory.hpp"
 #include "item/image.hpp"
 #include "properties/widgets/propertymanager.hpp"
 #include <KLocalizedString>
-#include <QFileDialog>
 #include <QImageReader>
 #include <QList>
+#include <QTimer>
+
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -29,12 +31,8 @@ ImageTool::ImageTool(ApplicationContext *context)
     m_properties = {Property::Type::Opacity};
     const QList<QByteArray> supportedImage = QImageReader::supportedImageFormats();
     for (const QByteArray &ba : supportedImage) {
-        if (!m_filter.isEmpty()) {
-            m_filter += u' ';
-        }
-        m_filter += "*."_L1 + QString::fromLatin1(ba);
+        m_patterns.append("*."_L1 + QString::fromLatin1(ba));
     }
-    m_filter = u"%1 (%2)"_s.arg(i18n("Image"), m_filter);
 }
 
 QString ImageTool::icon() const
@@ -51,30 +49,60 @@ void ImageTool::mouseReleased(ApplicationContext *context)
 {
     UIContext *uiContext{context->uiContext()};
 
-    if (uiContext->appEvent()->button() == Qt::LeftButton) {
-        const QPointF lastPoint = uiContext->appEvent()->pos();
-        const QString fileName = QFileDialog::getOpenFileName(nullptr, i18nc("@title:window", "Insert Image"), {}, m_filter);
-        if (fileName.isEmpty()) {
-            return;
-        }
-        auto spatialContext{context->spatialContext()};
-        auto renderingContext{context->renderingContext()};
-        auto commandHistory{spatialContext->commandHistory()};
-        CoordinateTransformer &transformer{spatialContext->coordinateTransformer()};
-        QPixmap pixmap;
-        pixmap.load(fileName);
-
-        std::shared_ptr<ImageItem> curItem = std::dynamic_pointer_cast<ImageItem>(m_itemFactory->create());
-        curItem->setBox(QRectF(transformer.viewToWorld(lastPoint), transformer.viewToWorld(QSizeF(100, 100))));
-
-        curItem->setProperty(Property::Type::Opacity, uiContext->propertyManager()->value(Property::Type::Opacity));
-        curItem->setPixmap(pixmap);
-
-        QList<std::shared_ptr<Item>> lst;
-        lst << curItem;
-        commandHistory->insert(std::make_shared<InsertItemCommand>(lst));
-
-        renderingContext->markForRender();
-        renderingContext->markForUpdate();
+    if (uiContext->appEvent()->button() != Qt::LeftButton) {
+        return;
     }
+
+    const QPointF lastPoint = uiContext->appEvent()->pos();
+
+    // Don't run a modal dialog from inside the mouse event handler: the canvas keeps its
+    // mouse grab and the app appears frozen. Defer until the event has been fully handled.
+    QTimer::singleShot(0, context->parentWidget(), [this, context, lastPoint]() {
+        chooseImage(context, lastPoint);
+    });
+}
+
+void ImageTool::chooseImage(ApplicationContext *context, const QPointF &lastPoint)
+{
+    FileChooser::choose(context->parentWidget(),
+                        FileChooser::Mode::OpenFile,
+                        i18nc("@title:window", "Insert Image"),
+                        i18n("Image"),
+                        m_patterns,
+                        {},
+                        context->parentWidget(),
+                        [this, context, lastPoint](const QString &fileName) {
+                            insertImage(context, lastPoint, fileName);
+                        });
+}
+
+void ImageTool::insertImage(ApplicationContext *context, const QPointF &lastPoint, const QString &fileName)
+{
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    UIContext *uiContext{context->uiContext()};
+    auto spatialContext{context->spatialContext()};
+    auto renderingContext{context->renderingContext()};
+    auto commandHistory{spatialContext->commandHistory()};
+    CoordinateTransformer &transformer{spatialContext->coordinateTransformer()};
+
+    QPixmap pixmap;
+    if (!pixmap.load(fileName)) {
+        return;
+    }
+
+    std::shared_ptr<ImageItem> curItem = std::dynamic_pointer_cast<ImageItem>(m_itemFactory->create());
+    curItem->setBox(QRectF(transformer.viewToWorld(lastPoint), transformer.viewToWorld(QSizeF(100, 100))));
+
+    curItem->setProperty(Property::Type::Opacity, uiContext->propertyManager()->value(Property::Type::Opacity));
+    curItem->setPixmap(pixmap);
+
+    QList<std::shared_ptr<Item>> lst;
+    lst << curItem;
+    commandHistory->insert(std::make_shared<InsertItemCommand>(lst));
+
+    renderingContext->markForRender();
+    renderingContext->markForUpdate();
 }

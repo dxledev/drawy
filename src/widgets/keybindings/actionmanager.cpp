@@ -13,7 +13,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDir>
-#include <QFileDialog>
 #include <QMimeData>
 #include <QXmlStreamWriter>
 #include <memory>
@@ -38,6 +37,8 @@
 #include "components/propertybar.hpp"
 #include "components/toolbar.hpp"
 #include "context/applicationcontext.hpp"
+#include "dialog/confirmmodal.hpp"
+#include "dialog/filechooser.hpp"
 #include "context/coordinatetransformer.hpp"
 #include "context/renderingcontext.hpp"
 #include "context/selectioncontext.hpp"
@@ -453,13 +454,17 @@ void ActionManager::newFile()
 
 void ActionManager::saveAsNewFile()
 {
-    const QDir homeDir{QDir::home()};
-    QString text{i18n("Untitled.%1", Common::drawyFileExt)};
-    const QString defaultFilePath = homeDir.filePath(text);
-    text = i18n("Drawy (*.%1)", Common::drawyFileExt);
-    const QString fileName{QFileDialog::getSaveFileName(nullptr, i18nc("@title:window", "Save File"), defaultFilePath, text)};
+    QString fileName = FileChooser::getPath(m_context->parentWidget(),
+                                            FileChooser::Mode::SaveFile,
+                                            i18nc("@title:window", "Save File"),
+                                            i18n("Drawy"),
+                                            {u"*."_s + Common::drawyFileExt},
+                                            i18n("Untitled.%1", Common::drawyFileExt));
     if (fileName.isEmpty()) {
         return;
+    }
+    if (QFileInfo(fileName).suffix().isEmpty()) {
+        fileName += u'.' + Common::drawyFileExt;
     }
     auto job = new SaveAsJob(m_context, this);
     const SaveAsJob::SaveAsInfo info{
@@ -477,17 +482,16 @@ void ActionManager::saveAsNewFile()
 
 void ActionManager::clear()
 {
-    if (KMessageBox::ButtonCode::PrimaryAction
-        == KMessageBox::questionTwoActions(nullptr,
-                                           i18nc("@action", "Do you really want to clear the canvas?"),
-                                           i18nc("@action", "Clear"),
-                                           KStandardGuiItem::ok(),
-                                           KStandardGuiItem::cancel())) {
-        const auto allItems{m_context->spatialContext()->quadtree().getAllItems()};
-        m_context->spatialContext()->commandHistory()->insert(std::make_shared<RemoveItemCommand>(allItems));
-        m_context->renderingContext()->markForRender();
-        m_context->renderingContext()->markForUpdate();
-    }
+    m_context->uiContext()->confirmModal()->ask(i18nc("@title", "Clear the canvas?"),
+                                                i18nc("@info", "Everything on the canvas will be removed. You can undo this afterwards."),
+                                                i18nc("@action:button", "Clear"),
+                                                i18nc("@action:button", "Cancel"),
+                                                [this]() {
+                                                    const auto allItems{m_context->spatialContext()->quadtree().getAllItems()};
+                                                    m_context->spatialContext()->commandHistory()->insert(std::make_shared<RemoveItemCommand>(allItems));
+                                                    m_context->renderingContext()->markForRender();
+                                                    m_context->renderingContext()->markForUpdate();
+                                                });
 }
 
 void ActionManager::saveCurrentFile()
@@ -520,10 +524,12 @@ void ActionManager::openFile()
         return;
     }
 
-    const QString filter = i18n("Drawy (*.%1)", Common::drawyFileExt);
-
-    const QDir homeDir{QDir::home()};
-    const QString fileName = QFileDialog::getOpenFileName(nullptr, i18nc("@title:window", "Open File"), homeDir.path(), filter);
+    const QString fileName = FileChooser::getPath(m_context->parentWidget(),
+                                                  FileChooser::Mode::OpenFile,
+                                                  i18nc("@title:window", "Open File"),
+                                                  i18n("Drawy"),
+                                                  {u"*."_s + Common::drawyFileExt},
+                                                  {});
     if (fileName.isEmpty()) {
         return;
     }
@@ -535,15 +541,17 @@ void ActionManager::openFile()
 
 void ActionManager::exportToSvg()
 {
-    const QDir homeDir{QDir::home()};
-    QString text = i18n("Untitled.svg");
-    const QString defaultFilePath = homeDir.filePath(text);
-    text = i18n("SVG (*.svg)");
-
-    const QString fileName{QFileDialog::getSaveFileName(nullptr, i18nc("@title:window", "Export to Svg"), defaultFilePath, text)};
-
+    QString fileName = FileChooser::getPath(m_context->parentWidget(),
+                                            FileChooser::Mode::SaveFile,
+                                            i18nc("@title:window", "Export to Svg"),
+                                            i18n("SVG"),
+                                            {u"*.svg"_s},
+                                            i18n("Untitled.svg"));
     if (fileName.isEmpty()) {
         return;
+    }
+    if (QFileInfo(fileName).suffix().isEmpty()) {
+        fileName += u".svg"_s;
     }
 
     QFile file{fileName};

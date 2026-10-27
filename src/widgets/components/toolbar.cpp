@@ -5,6 +5,7 @@
 #include "toolbar.hpp"
 #include "components/toolbuttonplugin.hpp"
 #include <KLocalizedString>
+#include <QAction>
 #include <QButtonGroup>
 #include <QHBoxLayout>
 #include <QStyle>
@@ -77,6 +78,24 @@ void ToolBar::addImageTool(const std::shared_ptr<Tool> &tool)
     btn->setCursor(Qt::PointingHandCursor);
     m_tools[Tool::Type::Image] = tool;
     m_group->addButton(btn, static_cast<int>(Tool::Type::Image));
+    m_layout->addWidget(btn);
+}
+
+void ToolBar::addActionButton(QAction *action)
+{
+    if (!action) {
+        return;
+    }
+
+    auto btn = new QToolButton(this);
+    btn->setDefaultAction(action);
+    btn->setAutoRaise(true);
+    btn->setToolButtonStyle(Qt::ToolButtonIconOnly);
+
+    const int iconSize{style()->pixelMetric(QStyle::PM_ToolBarIconSize)};
+    btn->setIconSize(QSize{iconSize, iconSize});
+
+    btn->setCursor(Qt::PointingHandCursor);
     m_layout->addWidget(btn);
 }
 

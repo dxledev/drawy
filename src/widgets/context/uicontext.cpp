@@ -29,6 +29,7 @@
 #include "tools/customtool.hpp"
 #include "tools/diamondtool.hpp"
 #include "tools/ellipsetool.hpp"
+#include "dialog/confirmmodal.hpp"
 #include "tools/erasertool.hpp"
 #include "tools/freeformtool.hpp"
 #include "tools/imagetool.hpp"
@@ -71,6 +72,7 @@ void UIContext::initializeUIContext()
     m_toolBar->addTool(std::make_shared<ArrowTool>(m_applicationContext), Tool::Type::Arrow, i18nc("@action:button", "Arrow"));
     m_toolBar->addTool(std::make_shared<LineTool>(m_applicationContext), Tool::Type::Line, i18nc("@action:button", "Line"));
     m_toolBar->addTool(std::make_shared<EraserTool>(m_applicationContext), Tool::Type::Eraser, i18nc("@action:button", "Eraser"));
+    m_toolBar->addActionButton(m_actionManager->action(ActionManager::Action::Clear));
     m_toolBar->addTool(std::make_shared<TextTool>(m_applicationContext), Tool::Type::Text, i18nc("@action:button", "Text"));
     m_toolBar->addTool(std::make_shared<MoveTool>(m_applicationContext), Tool::Type::Move, i18nc("@action:button", "Move"));
     m_toolBar->addImageTool(std::make_shared<ImageTool>(m_applicationContext));
@@ -82,6 +84,7 @@ void UIContext::initializeUIContext()
             m_topWidgets->initialize();
         }
     });
+    m_confirmModal = new ConfirmModal(m_applicationContext->parentWidget());
     m_bottomLeftWidgets = new BottomLeftWidgets(m_actionManager, m_applicationContext->parentWidget());
     connect(m_bottomLeftWidgets, &BottomLeftWidgets::resetZoom, this, [this]() {
         m_applicationContext->renderingContext()->updateZoomFactor(1);
@@ -104,7 +107,8 @@ void UIContext::initializeUIContext()
 
 void UIContext::slotThemeChanged()
 {
-    bool isDarkTheme = QGuiApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    const QPalette palette = QGuiApplication::palette();
+    bool isDarkTheme = palette.color(QPalette::Window).lightnessF() < 0.5;
     switch (DrawyGlobalConfig::canvasMode()) {
     case DrawyGlobalConfig::EnumCanvasMode::Light:
         isDarkTheme = false;
@@ -116,9 +120,25 @@ void UIContext::slotThemeChanged()
     default:
         break;
     }
-    const QColor bgColor = isDarkTheme ? DrawyGlobalConfig::backgroundColorDark() : DrawyGlobalConfig::backgroundColorLight();
+    QColor bgColor = isDarkTheme ? DrawyGlobalConfig::backgroundColorDark() : DrawyGlobalConfig::backgroundColorLight();
+    if (DrawyGlobalConfig::canvasThemed()) {
+        // A light touch of the accent color; the canvas stays close to black or white.
+        const qreal amount = isDarkTheme ? 0.10 : 0.07;
+        const QColor accent = palette.color(QPalette::Highlight);
+        bgColor = QColor::fromRgbF(bgColor.redF() * (1 - amount) + accent.redF() * amount,
+                                   bgColor.greenF() * (1 - amount) + accent.greenF() * amount,
+                                   bgColor.blueF() * (1 - amount) + accent.blueF() * amount);
+    }
     m_applicationContext->renderingContext()->setCanvasBackground(bgColor);
+    if (m_confirmModal) {
+        m_confirmModal->setTint(bgColor);
+    }
     Q_EMIT themeChanged(isDarkTheme);
+}
+
+ConfirmModal *UIContext::confirmModal() const
+{
+    return m_confirmModal;
 }
 
 ToolBar *UIContext::toolBar() const

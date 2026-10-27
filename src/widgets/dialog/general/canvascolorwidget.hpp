@@ -7,6 +7,7 @@
 #include "dialog/configgroupinterface.hpp"
 #include "libdrawywidgets_private_export.h"
 class KColorButton;
+class QCheckBox;
 class QComboBox;
 class QLineEdit;
 
@@ -23,5 +24,6 @@ private:
     KColorButton *const m_lightThemeColor;
     KColorButton *const m_darkThemeColor;
     QComboBox *const m_canvasMode;
+    QCheckBox *const m_canvasThemed;
     QLineEdit *const m_paletteSource;
 };

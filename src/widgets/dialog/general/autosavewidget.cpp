@@ -3,13 +3,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "autosavewidget.hpp"
+#include "dialog/filechooser.hpp"
 #include "dialog/general/configuregeneralwidget.hpp"
 
 #include "drawyglobalconfig.h"
 #include <KLocalization>
 #include <KLocalizedString>
 #include <QCheckBox>
-#include <QFileDialog>
+#include <QDir>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -41,14 +42,14 @@ AutoSaveWidget::AutoSaveWidget(QWidget *parent)
     pathLayout->setContentsMargins(0, 0, 0, 0);
 
     connect(pathBrowseButton, &QToolButton::clicked, this, [this]() -> void {
-        const auto home{QStandardPaths::writableLocation(QStandardPaths::HomeLocation)};
-        const auto directory{QFileDialog::getExistingDirectory(this, i18n("Open Directory"), home, QFileDialog::ShowDirsOnly)};
-        if (directory.isEmpty()) {
-            return;
-        }
+        FileChooser::choose(window(), FileChooser::Mode::OpenDirectory, i18n("Open Directory"), {}, {}, {}, this, [this](const QString &directory) {
+            if (directory.isEmpty()) {
+                return;
+            }
 
-        const auto finalPath{QDir::cleanPath(directory + QDir::separator() + u"drawy.autosave"_s)};
-        m_path->setText(finalPath);
+            const auto finalPath{QDir::cleanPath(directory + QDir::separator() + u"drawy.autosave"_s)};
+            m_path->setText(finalPath);
+        });
     });
 
     m_enabled->setText(i18n("Restore previous session on start"));

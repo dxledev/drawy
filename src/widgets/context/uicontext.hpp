@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QObject>
+class ConfirmModal;
 class ToolBar;
 class PropertyBar;
 class Event;
@@ -28,6 +29,7 @@ public:
     void initializeUIContext();
 
     [[nodiscard]] ToolBar *toolBar() const;
+    [[nodiscard]] ConfirmModal *confirmModal() const;
     [[nodiscard]] PropertyBar *propertyBar() const;
     [[nodiscard]] TopWidgets *topWidgets() const;
     [[nodiscard]] TopLeftWidgets *topLeftWidgets() const;
@@ -49,6 +51,7 @@ Q_SIGNALS:
 
 private:
     ToolBar *m_toolBar = nullptr;
+    ConfirmModal *m_confirmModal = nullptr;
     PropertyBar *m_propertyBar = nullptr;
     PropertyManager *m_propertyManager = nullptr;
     KeybindManager *const m_keybindManager;
