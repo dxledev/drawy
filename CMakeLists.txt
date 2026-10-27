@@ -55,6 +55,7 @@ find_package(
         WidgetsAddons
         Config
         ConfigWidgets
+        ColorScheme
         XmlGui
         IconThemes
         I18n

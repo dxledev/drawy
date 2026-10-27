@@ -7,11 +7,15 @@
 #include "context/uicontext.hpp"
 #include "frame.hpp"
 #include "keybindings/actionmanager.hpp"
+#include "theme/systemschemecontroller.hpp"
+#include "theme/systemschememenu.hpp"
 #include <KActionMenu>
 #include <KColorSchemeManager>
 #include <KColorSchemeMenu>
 #include <KHelpMenu>
 #include <KLocalizedString>
+#include <QAction>
+#include <QTimer>
 #include <QHBoxLayout>
 #include <QMenu>
 #include <QStyle>
@@ -23,7 +27,9 @@ TopLeftWidgets::TopLeftWidgets(ActionManager *actionManager, QWidget *parent)
     , m_layout{new QHBoxLayout{this}}
     , mHelpMenu(new HelpMenu(this))
     , mColorSchemeMenu(KColorSchemeMenu::createMenu(KColorSchemeManager::instance(), this))
+    , mSystemScheme(new SystemSchemeController(this))
 {
+    setupSystemSchemes();
     m_layout->setContentsMargins(0, 0, 0, 0);
 
     // menu button
@@ -88,6 +94,13 @@ TopLeftWidgets::TopLeftWidgets(ActionManager *actionManager, QWidget *parent)
     menuFrameLayout->addWidget(loadButton);
 
     m_layout->addWidget(menuFrame);
+}
+
+void TopLeftWidgets::setupSystemSchemes()
+{
+    SystemSchemeMenu::install(mColorSchemeMenu, mSystemScheme);
+    // KColorSchemeManager restores its own saved scheme on construction; apply ours afterwards.
+    QTimer::singleShot(0, mSystemScheme, &SystemSchemeController::restore);
 }
 
 #include "moc_topleftwidgets.cpp"

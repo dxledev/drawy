@@ -42,5 +42,23 @@
       <entry name="BackgroundColorDark" type="Color">
         <default>#121212</default>
       </entry>
+      <entry name="CanvasMode" type="Enum">
+        <choices>
+          <choice name="InheritScheme"/>
+          <choice name="Light"/>
+          <choice name="Dark"/>
+        </choices>
+        <default>InheritScheme</default>
+      </entry>
+    </group>
+    <group name="Appearance">
+      <!-- "", "dark" or "light": the System Dark / System Light scheme that follows the shell palette. -->
+      <entry name="SystemScheme" type="String">
+        <default></default>
+      </entry>
+      <!-- Palette file or directory (Colors.qml, palette.json, noctalia.json, kitty.conf); empty auto-detects. -->
+      <entry name="SystemPaletteSource" type="Path">
+        <default></default>
+      </entry>
     </group>
 </kcfg>

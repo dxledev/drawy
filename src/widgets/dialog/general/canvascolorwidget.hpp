@@ -7,6 +7,8 @@
 #include "dialog/configgroupinterface.hpp"
 #include "libdrawywidgets_private_export.h"
 class KColorButton;
+class QComboBox;
+class QLineEdit;
 
 class LIBDRAWYWIDGETS_TESTS_EXPORT CanvasColorWidget : public ConfigGroupInterface
 {
@@ -20,4 +22,6 @@ public:
 private:
     KColorButton *const m_lightThemeColor;
     KColorButton *const m_darkThemeColor;
+    QComboBox *const m_canvasMode;
+    QLineEdit *const m_paletteSource;
 };

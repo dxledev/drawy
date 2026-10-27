@@ -208,6 +208,12 @@ target_sources(
         dialog/general/autosavewidget.cpp
         dialog/general/canvascolorwidget.hpp
         dialog/general/canvascolorwidget.cpp
+        theme/systempalette.hpp
+        theme/systempalette.cpp
+        theme/systemschemecontroller.hpp
+        theme/systemschemecontroller.cpp
+        theme/systemschememenu.hpp
+        theme/systemschememenu.cpp
         dialog/misc/configuremiscwidget.hpp
         dialog/misc/configuremiscwidget.cpp
         dialog/misc/powermanagerwidget.hpp
@@ -268,7 +274,9 @@ target_link_libraries(
     PRIVATE
         Qt::Widgets
         KF6::WidgetsAddons
+        KF6::ConfigCore
         KF6::ConfigWidgets
+        KF6::ColorScheme
         KF6::XmlGui
         KF6::I18n
         KF6::SyntaxHighlighting

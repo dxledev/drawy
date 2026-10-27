@@ -104,9 +104,19 @@ void UIContext::initializeUIContext()
 
 void UIContext::slotThemeChanged()
 {
-    QColor bgColor = QGuiApplication::palette().color(QPalette::Window);
-    bool isDarkTheme = bgColor.lightnessF() < 0.5;
-    bgColor = isDarkTheme ? DrawyGlobalConfig::backgroundColorDark() : DrawyGlobalConfig::backgroundColorLight();
+    bool isDarkTheme = QGuiApplication::palette().color(QPalette::Window).lightnessF() < 0.5;
+    switch (DrawyGlobalConfig::canvasMode()) {
+    case DrawyGlobalConfig::EnumCanvasMode::Light:
+        isDarkTheme = false;
+        break;
+    case DrawyGlobalConfig::EnumCanvasMode::Dark:
+        isDarkTheme = true;
+        break;
+    case DrawyGlobalConfig::EnumCanvasMode::InheritScheme:
+    default:
+        break;
+    }
+    const QColor bgColor = isDarkTheme ? DrawyGlobalConfig::backgroundColorDark() : DrawyGlobalConfig::backgroundColorLight();
     m_applicationContext->renderingContext()->setCanvasBackground(bgColor);
     Q_EMIT themeChanged(isDarkTheme);
 }
